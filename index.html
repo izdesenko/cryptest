@@ -8,7 +8,7 @@
 	<meta name="author" content="" />
 	
 	<script>
-		
+
 	var Coder = function(source,passphrase){
 		this.code = {};
 		this.passphrase = passphrase;
@@ -26,7 +26,11 @@
 			});
 	};
 	
-	/* Задача 1 */
+	/* Задача 1
+	Так как этот код должен работать в IE8 - вместо использования defineProperties использован prototype,
+	так как в восьмёрке поддержка defineProperty была ограничена и в данном случае нерелевантна.
+	*/
+	
 	Coder.prototype.pack = function(list){
 		var that = this;
 		return list
@@ -53,11 +57,8 @@
 		
 	/* Задача 2 */
 	Coder.prototype.encrypt = function(text){
-		var hk = this.passphrase,crypted = '',
-			mlen =  text.length	- hk.length;
-		
-		if(mlen > 0)
-			hk += this.passphrase.repeat(mlen / this.passphrase.length || 0) + this.passphrase.slice(0,mlen % this.passphrase.length);
+		var crypted = '',
+			hk = this.enlarge_your_key(text.length - this.passphrase.length);
 		
 		for(var i = 0; i < text.length; i++){
 			var c = text.charCodeAt(i);
@@ -65,7 +66,7 @@
 		}
 		return btoa(crypted);
 	};
-
+	
 	Coder.prototype.decrypt = function(code){
 		code = atob(code);
 		var text = '',
@@ -77,7 +78,7 @@
 		}
 		return text;
 	}
-
+	
 	Coder.prototype.enlarge_your_key = function(diff){
 		return this.passphrase +
 			this.passphrase.repeat(parseInt(diff / this.passphrase.length)) + 
@@ -235,17 +236,13 @@
 		console.log('Encrypted: ',encrypted);
 		console.log('Decrypted: ',decrypted);
 		console.log('Unpacked:: ',unpacked);
-		console.log('Source:::: ',unpacked);
+		console.log('Source:::: ',source);
 	</script>
 </head>
 <body>
 <ul>
-<li>index.php - демонстрационный скрипт.</li>
-<li>ajax.php - получает закодированну строку, возвращает раскодированный массив.</li>
-<li>ajax2.php - возвращает закодированну строку, для декодирования на клиенте.</li>
-<li>lib/conf.php - исходные данные, справочник для формирования кода упаковщика.</li>
-<li>lib/coder.php - серверная библиотека упаковщика.</li>
-<li>js/coder.js - клиентская библиотека упаковщика и реализация задачи 3</li>
+<li>index.html - демонстрационный скрипт для javascript упаковщика.</li>
+<li>index.php - демонстрационный скрипт для php упаковщика.</li>
 </ul>
 </body>
 </html>

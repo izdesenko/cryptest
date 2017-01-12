@@ -1,5 +1,5 @@
 <?php
-$reference = [
+$source = [
 	'red/apple/candy/jujube/red','green/apple/candy','red/garnet/juice','green/grapes/candy',
 	'orange/orange/coctail/alcohol','green/apple/jujube/green','green/grapes/ice cream','red/apple/candy',
 	'orange/orange/juice','orange/orange/pie','red/strawberry/candy','red/strawberry/pie',
@@ -10,5 +10,4 @@ $reference = [
 	'green/lime/coctail/alcohol','green/lime/tea','green/apple/puree','green/lime/mousse','red/apple/candy/sweet',
 	'green/apple/sweet','red/grapes/candy'];
 $passphrase = '8c095ceb1f3b84e4943b4fd526c5461c';
-$iv = 'f53aa4c83f40939b8873a4760a3c3bb2';
 ?>
