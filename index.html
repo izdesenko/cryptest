@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title></title>
+	<meta name="keywords" content="" />
+	<meta name="description" content="" />
+	<meta name="author" content="" />
+	
+	<script>
+		
+	var Coder = function(source,passphrase){
+		this.code = {};
+		this.passphrase = passphrase;
+		
+		var i = 49,
+			that = this;
+		
+		source
+			.forEach(function(item){
+				return item
+					.split('/')
+					.forEach(function(word){
+						that.code[word] = that.code[word] || String.fromCharCode(i++);
+					});
+			});
+	};
+	
+	/* Задача 1 */
+	Coder.prototype.pack = function(list){
+		var that = this;
+		return list
+			.map(function(str){
+				return str
+					.split('/')
+					.map(function(word){return that.code[word];})
+					.join('');
+			})
+			.join('0');
+	};
+	
+	Coder.prototype.unpack = function(str){
+		var bc = this.code.flip();
+		return str
+			.split('0')
+			.map(function(es){
+				return es
+					.split('')
+					.map(function(c){return bc[c];})
+					.join('/');
+			});
+	};
+		
+	/* Задача 2 */
+	Coder.prototype.encrypt = function(text){
+		var hk = this.passphrase,crypted = '',
+			mlen =  text.length	- hk.length;
+		
+		if(mlen > 0)
+			hk += this.passphrase.repeat(mlen / this.passphrase.length || 0) + this.passphrase.slice(0,mlen % this.passphrase.length);
+		
+		for(var i = 0; i < text.length; i++){
+			var c = text.charCodeAt(i);
+			crypted += String.fromCharCode(c + hk.charCodeAt(i));
+		}
+		return btoa(crypted);
+	};
+
+	Coder.prototype.decrypt = function(code){
+		code = atob(code);
+		var text = '',
+			hk = this.enlarge_your_key(code.length - this.passphrase.length);
+		
+		for(var i = 0; i < code.length; i++){
+			var c = code.charCodeAt(i);
+			text += String.fromCharCode(c - hk.charCodeAt(i));
+		}
+		return text;
+	}
+
+	Coder.prototype.enlarge_your_key = function(diff){
+		return this.passphrase +
+			this.passphrase.repeat(parseInt(diff / this.passphrase.length)) + 
+			this.passphrase.slice(0,diff % this.passphrase.length);
+	}
+
+	/*
+	Coder.prototype.encrypt = function(str){
+			return CryptoJS.AES.encrypt(str,this.passphrase,{iv:this.iv}).ciphertext.toString(CryptoJS.enc.Base64);    
+	};
+	
+	Coder.prototype.decrypt = function(str){
+		return CryptoJS.AES.decrypt(str,this.passphrase,{iv:this.iv}).toString(CryptoJS.enc.Utf8);
+	};
+	*/
+	
+	Object.prototype.flip = function(){
+		var key,res={};
+		for(key in this)
+			if(this.hasOwnProperty(key))
+				res[this[key]] = key;
+		return res;
+	};
+	
+	Array.prototype.equal = function(to){
+		return this.length == to.length && this.every(function(element,index){
+			return element === to[index]; 
+		});
+	};
+	
+	if(!String.prototype.repeat){
+		string.prototype.repeat = function(n){
+		var r = this;
+		for(var i = 0; i <	n; i++){r += this;}
+			return r;
+		};
+	}
+	
+	/* Задача 3
+	Полифилл для Function.bind
+	bind появляется в IE 9, до этой версии не было defineProperties, поэтому через прототип
+	if(!Function.prototype.bind){
+	Function.prototype.bind = function(self){
+	*/
+	Function.prototype.bbind = function(self){
+		var fn = this;
+		return function(){
+			return fn.apply(self,arguments);
+		};
+	};
+	// }
+	
+	// самописные тесты:
+	// проверяем что вернёт return this для разных вариантов применения нативного bind и полифилла.
+	[
+		null,undefined,NaN,'',0,10,[],
+		[1,2,3,'test'],{},{a:1,b:2},new Map(),new Set(),
+		function test(){console.log(test);}
+	].forEach(function(ta){
+		var f = function(){return this;},
+			f1 = f.bind(ta),
+			f2 = f.bbind(ta);
+		
+		console.log(deepCompare(f1(),f2()));
+	});
+	
+	function deepCompare(){
+		var i,l,leftChain,rightChain;
+		
+		function compare2Objects(x,y){
+			var p;
+			
+			if(isNaN(x) && isNaN(y) && typeof x === 'number' && typeof y === 'number'){
+				return true;
+			}
+			
+			if(x === y){
+				return true;
+			}
+
+			if(
+				typeof x === 'function' && typeof y === 'function' 
+				|| x instanceof Date && y instanceof Date
+				|| x instanceof RegExp && y instanceof RegExp
+				|| x instanceof String && y instanceof String
+				|| x instanceof Number && y instanceof Number
+			) return x.toString() === y.toString();
+
+			
+			if(!(x instanceof Object && y instanceof Object)) return false;
+			if(x.isPrototypeOf(y) || y.isPrototypeOf(x)) return false;
+			if(x.constructor !== y.constructor) return false;
+			if(x.prototype !== y.prototype) return false;
+			if(leftChain.indexOf(x) > -1 || rightChain.indexOf(y) > -1) return false;
+			
+			for(p in y){
+				if(y.hasOwnProperty(p) !== x.hasOwnProperty(p)) return false;
+				else if(typeof y[p] !== typeof x[p]) return false;
+			}
+
+			for(p in x){
+				if(y.hasOwnProperty(p) !== x.hasOwnProperty(p)) return false;
+				else if(typeof y[p] !== typeof x[p]) return false;
+				
+				switch(typeof x[p]){
+				case 'object':
+				case 'function':
+					leftChain.push(x);
+					rightChain.push(y);
+					
+					if(!compare2Objects(x[p],y[p])) return false;
+					
+					leftChain.pop();
+					rightChain.pop();
+					break;
+				default:
+					if(x[p] !== y[p]) return false;
+					break;
+				}
+			}
+			return true;
+		}
+		
+		if(arguments.length < 1){
+			return true;
+		}
+		
+		for(i = 1,l = arguments.length; i < l; i++){
+			leftChain = []; //Todo: this can be cached
+			rightChain = [];
+			
+			if(!compare2Objects(arguments[0],arguments[i])) return false;
+		}
+		
+		return true;
+	}
+	
+	var source = [
+			'red/apple/candy/jujube/red','green/apple/candy','red/garnet/juice','green/grapes/candy',
+			'orange/orange/coctail/alcohol','green/apple/jujube/green','green/grapes/ice cream','red/apple/candy',
+			'orange/orange/juice','orange/orange/pie','red/strawberry/candy','red/strawberry/pie',
+			'orange/orange/coctail/non alcohol','red/apple/puree','green/grapes/juice','green/grass/silo',
+			'red/strawberry/juice','red/apple/candy/jujube/green','red/garnet/candy/red','red/grapes/ice cream',
+			'red/garnet/candy/jujube','red/apple/candy/jujube/blue','green/apple/jujube/green','red/strawberry/ice cream',
+			'red/apple/ice cream','red/garnet/pie','green/grass/hay','green/lime/coctail/non alcohol','red/grapes/juice',
+			'green/lime/coctail/alcohol','green/lime/tea','green/apple/puree','green/lime/mousse','red/apple/candy/sweet',
+			'green/apple/sweet','red/grapes/candy'],
+		c = new Coder(source,'CUSTOM PASSPHRAZZE'),
+		packed = c.pack(source),
+		encrypted = c.encrypt(packed),
+		decrypted = c.decrypt(encrypted),
+		unpacked = c.unpack(decrypted);
+
+		console.log('Packed:::: ',packed);
+		console.log('Encrypted: ',encrypted);
+		console.log('Decrypted: ',decrypted);
+		console.log('Unpacked:: ',unpacked);
+		console.log('Source:::: ',unpacked);
+	</script>
+</head>
+<body>
+<ul>
+<li>index.php - демонстрационный скрипт.</li>
+<li>ajax.php - получает закодированну строку, возвращает раскодированный массив.</li>
+<li>ajax2.php - возвращает закодированну строку, для декодирования на клиенте.</li>
+<li>lib/conf.php - исходные данные, справочник для формирования кода упаковщика.</li>
+<li>lib/coder.php - серверная библиотека упаковщика.</li>
+<li>js/coder.js - клиентская библиотека упаковщика и реализация задачи 3</li>
+</ul>
+</body>
+</html>
+
